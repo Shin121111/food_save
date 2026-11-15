@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f3ef">
+  <title>My bookings · The Good Store</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="user.css">
+  <link rel="stylesheet" href="prices.css">
+</head>
+<body>
+  <div class="site-shell">
+    <header class="site-header">
+      <a class="brand" href="index.html"><span class="brand-mark">g</span><span>the good store</span></a>
+      <nav aria-label="Main navigation"><a href="index.html">Find food</a><a class="nav-active" href="bookings.html">My bookings <span class="booking-count" id="booking-count">0</span></a></nav>
+      <a class="owner-link" href="../Shop%20owner%20log%20in%20screen/shop-owner-login.html">Shop owner <span>→</span></a>
+    </header>
+    <main class="bookings-main">
+      <div class="bookings-heading"><p class="eyebrow">YOUR LITTLE PLANS</p><h1>My bookings</h1><p>Keep track of the food you’ve reserved.</p></div>
+      <div class="booking-list" id="booking-list"></div>
+      <a class="back-to-food" href="index.html">← Find more food</a>
+    </main>
+    <footer class="site-footer"><a class="brand" href="index.html"><span class="brand-mark">g</span><span>the good store</span></a><span>Good things are better shared.</span><span>© 2025 The Good Store</span></footer>
+  </div>
+  <script>
+    const BOOKINGS_KEY = 'good-store-bookings-v1';
+    const bookingList = document.querySelector('#booking-list');
+
+    function readBookings() {
+      // Later, replace this localStorage code with: fetch('/api/bookings')
+      try { return JSON.parse(localStorage.getItem(BOOKINGS_KEY) || '[]'); }
+      catch (error) { return []; }
+    }
+
+    function makeElement(tag, className, text) {
+      const element = document.createElement(tag);
+      if (className) element.className = className;
+      if (text !== undefined) element.textContent = text;
+      return element;
+    }
+
+    async function renderBookings() {
+      let bookings;
+      try { const response = await fetch('/api/my-bookings'); if (!response.ok) throw new Error(); bookings = await response.json(); }
+      catch (error) { bookingList.textContent = 'Could not load bookings. Please try again later.'; return; }
+      document.querySelector('#booking-count').textContent = String(bookings.length);
+      bookingList.replaceChildren();
+
+      if (bookings.length === 0) {
+        const empty = makeElement('section', 'empty-bookings');
+        empty.append(makeElement('span', 'empty-plate', '🍽️'));
+        empty.append(makeElement('h2', '', 'Nothing reserved yet'));
+        empty.append(makeElement('p', '', 'When you reserve a food special, it will show up here.'));
+        const link = makeElement('a', 'book-button empty-link', 'Browse food →');
+        link.href = 'index.html';
+        empty.append(link);
+        bookingList.append(empty);
+        return;
+      }
+
+      bookings.forEach(booking => {
+        const card = makeElement('article', 'booking-card');
+        const icon = makeElement('div', 'booking-card-icon', '✓');
+        const details = makeElement('div', 'booking-card-details');
+        details.append(makeElement('h2', '', booking.foodName));
+        details.append(makeElement('p', '', `${booking.quantity} portion${booking.quantity === 1 ? '' : 's'} · Reserved ${booking.bookedAt}`));
+        if (booking.originalPrice && booking.salePrice) {
+          const prices = `Original ¥${Number(booking.originalPrice).toLocaleString('ja-JP')} · Sale ¥${Number(booking.salePrice).toLocaleString('ja-JP')} each · Total ¥${Number(booking.totalPrice).toLocaleString('ja-JP')}`;
+          details.append(makeElement('p', 'booking-price', prices));
+        }
+        if (booking.deadline) details.append(makeElement('p', 'booking-deadline', `Reservation deadline: ${booking.deadline}`));
+        card.append(icon, details, makeElement('span', 'booking-status', booking.status || 'Requested'));
+        bookingList.append(card);
+      });
+    }
+
+    renderBookings();
+  </script>
+</body>
+</html>

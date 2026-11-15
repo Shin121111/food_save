@@ -1,0 +1,31 @@
+.owner-bookings-content { max-width: 850px; margin: 0 auto; padding: 49px 0 24px; }
+.bookings-page-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 27px; }
+.bookings-page-heading h1 { margin: 0; color: #30483a; font: 600 38px/1.12 'Playfair Display', Georgia, serif; letter-spacing: -.8px; }
+.page-intro { margin: 9px 0 0; color: #879289; font-size: 11px; }
+.shop-badge { display: flex; align-items: center; gap: 8px; padding: 9px 11px; border: 1px solid #e7ece5; border-radius: 7px; color: #718174; font-size: 8px; font-weight: 700; letter-spacing: .8px; white-space: nowrap; }
+.booking-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 34px; }
+.summary-card { display: flex; flex-direction: column; gap: 7px; padding: 15px 17px; border: 1px solid #e8ece6; border-radius: 8px; background: #fcfdfb; }
+.summary-number { color: #3f5c46; font: 600 25px 'Playfair Display', Georgia, serif; }
+.summary-label { color: #98a198; font-size: 8px; font-weight: 700; letter-spacing: 1px; }
+.booking-list-heading { display: flex; align-items: end; justify-content: space-between; gap: 14px; margin-bottom: 12px; }
+.booking-list-heading h2 { margin: 0; color: #354b3d; font: 600 21px 'Playfair Display', Georgia, serif; }
+.booking-list-heading p { margin: 5px 0 0; color: #929b94; font-size: 9px; }
+.sample-label { padding: 5px 8px; border-radius: 4px; background: #f5efe3; color: #9a7a4d; font-size: 7px; font-weight: 700; letter-spacing: .9px; }
+.booking-list { display: grid; gap: 10px; }
+.owner-booking-card { display: grid; grid-template-columns: minmax(0, 1fr) 125px 155px; align-items: center; gap: 18px; padding: 17px 18px; border: 1px solid #e6ebe4; border-radius: 9px; background: #fff; }
+.owner-booking-card.picked-up { background: #fbfcfa; }
+.owner-booking-main { min-width: 0; }
+.owner-booking-topline { display: flex; align-items: center; gap: 9px; margin-bottom: 7px; }
+.booking-id { color: #87948a; font-size: 8px; font-weight: 700; letter-spacing: .7px; }
+.booking-status { padding: 4px 7px; border-radius: 10px; font-size: 7px; font-weight: 700; white-space: nowrap; }
+.status-waiting { background: #f7f0e3; color: #987a4c; }.status-picked { background: #edf3eb; color: #5d795f; }
+.product-name { overflow: hidden; margin: 0; color: #354b3d; font: 600 15px 'Playfair Display', Georgia, serif; text-overflow: ellipsis; white-space: nowrap; }
+.customer-name { margin: 6px 0 0; color: #627267; font-size: 10px; font-weight: 600; }.reserved-at { margin: 4px 0 0; color: #a0a8a1; font-size: 8px; }
+.booking-details { display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 9px; row-gap: 7px; padding-left: 15px; border-left: 1px solid #edf0eb; }
+.detail-cell { color: #9aa39b; font-size: 8px; }.detail-value { color: #506454; font-size: 10px; text-align: right; }.price-value { color: #496b54; font-size: 12px; }
+.booking-action { display: flex; justify-content: flex-end; }.pickup-button { min-width: 140px; min-height: 36px; padding: 0 10px; border: 0; border-radius: 6px; background: #496b54; color: #fff; font: 600 9px 'DM Sans', sans-serif; cursor: pointer; transition: background .18s, transform .18s; }.pickup-button:hover:not(:disabled) { background: #3d5d46; transform: translateY(-1px); }.pickup-button:disabled { border: 1px solid #e1e8df; background: #f1f5ef; color: #718575; cursor: default; }
+.empty-bookings { padding: 26px; border: 1px dashed #d9e0d7; border-radius: 8px; color: #8a958c; background: #fcfdfb; font-size: 10px; text-align: center; }
+.backend-note { display: flex; flex-direction: column; gap: 5px; margin-top: 24px; padding: 13px 15px; border-left: 3px solid #b6c5b2; border-radius: 0 6px 6px 0; background: #f7f9f5; }.backend-note strong { color: #647a67; font-size: 9px; }.backend-note span { color: #919b92; font-size: 9px; line-height: 1.5; }
+.owner-bookings-content footer { margin-top: 26px; }
+@media (max-width: 760px) { .owner-bookings-content { padding: 36px 0 20px; }.owner-booking-card { grid-template-columns: minmax(0, 1fr) 120px; gap: 14px; }.booking-details { grid-column: 1; grid-row: 2; grid-template-columns: auto auto auto auto; justify-content: start; padding: 9px 0 0; border-left: 0; border-top: 1px solid #edf0eb; }.booking-action { grid-column: 2; grid-row: 1 / span 2; }.pickup-button { min-width: 120px; } }
+@media (max-width: 520px) { .owner-bookings-content { padding-top: 29px; }.bookings-page-heading { align-items: flex-start; flex-direction: column; gap: 14px; }.bookings-page-heading h1 { font-size: 33px; }.booking-summary { gap: 7px; margin-bottom: 27px; }.summary-card { padding: 12px 10px; }.summary-number { font-size: 21px; }.summary-label { font-size: 7px; letter-spacing: .5px; }.owner-booking-card { grid-template-columns: 1fr; gap: 11px; padding: 14px; }.booking-details { grid-column: 1; grid-row: auto; display: flex; flex-wrap: wrap; gap: 7px 13px; }.booking-details .detail-cell { margin-left: 0; }.booking-details .detail-value { text-align: left; }.booking-action { grid-column: 1; grid-row: auto; justify-content: stretch; }.pickup-button { width: 100%; }.booking-list-heading h2 { font-size: 18px; }.sample-label { font-size: 6px; } }

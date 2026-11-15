@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f3ef">
+  <title>Fresh finds · The Good Store</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="user.css">
+  <link rel="stylesheet" href="prices.css">
+  <link rel="stylesheet" href="booking-login.css">
+</head>
+<body>
+  <div class="site-shell">
+    <header class="site-header">
+      <a class="brand" href="index.html"><span class="brand-mark">g</span><span>the good store</span></a>
+      <nav aria-label="Main navigation"><a class="nav-active" href="index.html">Find food</a><a href="bookings.html">My bookings <span class="booking-count" id="booking-count">0</span></a></nav>
+      <a class="owner-link" href="../Shop%20owner%20log%20in%20screen/shop-owner-login.html">Shop owner <span>→</span></a>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-copy"><p class="eyebrow">GOOD FOOD, GOOD NEIGHBORS</p><h1>A little something<br>to look forward to.</h1><p>Discover fresh, local food specials and reserve yours before they’re gone.</p></div>
+        <div class="hero-art" aria-hidden="true"><div class="hero-sun"></div><div class="hero-plate"><span>🥐</span><span>🍓</span><span>🥖</span></div><span class="hero-leaf leaf-a">✳</span><span class="hero-leaf leaf-b">✳</span><div class="hero-note">made fresh<br>near you</div></div>
+        <div class="hero-index"><span>LOCAL FINDS</span><span>01 / EVERY DAY</span></div>
+      </section>
+
+      <section class="menu-section" aria-labelledby="menu-title">
+        <div class="section-heading"><div><p class="eyebrow">TODAY’S LITTLE TREATS</p><h2 id="menu-title">Fresh from the shop</h2><p class="section-intro">Reserve a portion and pick it up before the shop’s deadline.</p></div><div class="availability-key"><span></span> Available to reserve</div></div>
+        <div class="notice" id="source-notice" role="status"></div>
+        <div class="food-grid" id="food-grid" aria-live="polite"></div>
+      </section>
+    </main>
+    <footer class="site-footer"><a class="brand" href="index.html"><span class="brand-mark">g</span><span>the good store</span></a><span>Good things are better shared.</span><span>© 2025 The Good Store</span></footer>
+  </div>
+
+  <dialog class="booking-dialog" id="booking-dialog">
+    <form method="dialog" class="dialog-close-form"><button class="dialog-close" aria-label="Close">×</button></form>
+    <section id="booking-checkout">
+      <p class="eyebrow">CHECK YOUR DETAILS</p>
+      <h2>Complete your booking</h2>
+      <p class="dialog-copy">Your contact details help the shop prepare your reservation.</p>
+      <div class="order-review" aria-live="polite">
+        <span class="review-label">YOUR RESERVATION</span>
+        <strong id="review-product">—</strong>
+        <div><span id="review-quantity">Quantity: —</span><span id="review-total">Total: —</span></div>
+      </div>
+      <form id="customer-details-form" class="customer-details-form">
+        <label for="customer-name">Full name<input id="customer-name" name="customerName" type="text" autocomplete="name" placeholder="e.g. Mika Tanaka" required></label>
+        <label for="customer-email">Email address<input id="customer-email" name="customerEmail" type="email" autocomplete="email" placeholder="you@example.com" required></label>
+        <label for="customer-phone">Phone number<input id="customer-phone" name="customerPhone" type="tel" autocomplete="tel" inputmode="tel" placeholder="e.g. 090-1234-5678" required></label>
+        <button class="confirm-booking-button" type="submit">Confirm booking <span aria-hidden="true">→</span></button>
+      </form>
+    </section>
+    <section id="booking-success" hidden>
+      <div class="dialog-mark">✓</div><p class="eyebrow">YOU’RE ALL SET</p><h2>Reservation requested</h2><p class="dialog-copy" id="booking-confirmation"></p><a class="dialog-link" href="bookings.html">View my bookings →</a>
+    </section>
+  </dialog>
+
+  <script>
+    // These names are shared with the shop-owner page.
+    const FOOD_ITEMS_KEY = 'good-store-food-items-v1';
+    const BOOKINGS_KEY = 'good-store-bookings-v1';
+
+    const foodGrid = document.querySelector('#food-grid');
+    const sourceNotice = document.querySelector('#source-notice');
+    const bookingDialog = document.querySelector('#booking-dialog');
+    const customerDetailsForm = document.querySelector('#customer-details-form');
+    let selectedBooking = null;
+
+    // Demo food appears when no shop-owner items have been saved yet.
+    const demoFood = [
+      { id: 'demo-bread', name: 'Sunday sourdough loaf', quantity: '8', originalPrice: 900, salePrice: 650, deadline: '17:30', soldOut: false, emoji: '🥖', tag: 'BAKED THIS MORNING', description: 'Slow-fermented country loaf with a crisp crust.' },
+      { id: 'demo-strawberry', name: 'Strawberry cream tart', quantity: '4', originalPrice: 780, salePrice: 580, deadline: '16:00', soldOut: false, emoji: '🍓', tag: 'SMALL BATCH', description: 'Local berries, vanilla cream, buttery pastry.' },
+      { id: 'demo-lunch', name: 'Roasted veggie lunch box', quantity: '0', originalPrice: 1100, salePrice: 800, deadline: '13:00', soldOut: true, emoji: '🥗', tag: 'SEASONAL FAVORITE', description: 'Colorful market vegetables with herby grains.' }
+    ];
+
+    function readSavedItems() {
+      // Later, replace this localStorage code with: fetch('/api/food-items')
+      try {
+        return JSON.parse(localStorage.getItem(FOOD_ITEMS_KEY) || '[]');
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function readBookings() {
+      try { return JSON.parse(localStorage.getItem(BOOKINGS_KEY) || '[]'); }
+      catch (error) { return []; }
+    }
+
+    function makeElement(tag, className, text) {
+      const element = document.createElement(tag);
+      if (className) element.className = className;
+      if (text !== undefined) element.textContent = text;
+      return element;
+    }
+
+    async function renderFoodItems() {
+      let foodItems;
+      try {
+        const response = await fetch('/api/items');
+        if (!response.ok) throw new Error();
+        foodItems = await response.json();
+        sourceNotice.textContent = foodItems.length ? 'Showing food specials posted by shop owners.' : 'No food specials available right now.';
+      } catch (error) { sourceNotice.textContent = 'Could not load food items. Please try again later.'; return; }
+      foodGrid.replaceChildren();
+
+      foodItems.forEach(item => {
+        const itemIsSoldOut = item.soldOut || (item.quantity !== '' && item.quantity != null && Number(item.quantity) === 0);
+        const card = makeElement('article', `food-card${itemIsSoldOut ? ' is-sold-out' : ''}`);
+        const imageArea = makeElement('div', 'food-image');
+        if (item.photo) {
+          const image = makeElement('img', 'uploaded-food-photo');
+          image.src = item.photo;
+          image.alt = item.name || 'Food special';
+          imageArea.append(image);
+        } else {
+          imageArea.classList.add(item.id === 'demo-strawberry' ? 'image-pink' : item.id === 'demo-lunch' ? 'image-green' : 'image-gold');
+          imageArea.append(makeElement('span', 'food-emoji', item.emoji || '🍽️'));
+          imageArea.append(makeElement('span', 'food-tag', item.tag || 'FROM YOUR LOCAL SHOP'));
+        }
+        if (itemIsSoldOut) imageArea.append(makeElement('span', 'sold-out-ribbon', 'SOLD OUT'));
+
+        const cardBody = makeElement('div', 'food-card-body');
+        const titleLine = makeElement('div', 'food-title-line');
+        titleLine.append(makeElement('h3', '', item.name || 'Food special'));
+        titleLine.append(makeElement('span', 'portion-stock', itemIsSoldOut ? 'Sold out' : `${item.quantity || '—'} left`));
+        cardBody.append(titleLine);
+        cardBody.append(makeElement('p', 'food-description', item.description || 'A fresh special from a local shop. Reserve a portion while it’s available.'));
+
+        const priceLine = makeElement('div', 'food-price-line');
+        if (item.originalPrice && item.salePrice) {
+          priceLine.append(makeElement('span', 'original-price', `Original ¥${Number(item.originalPrice).toLocaleString('ja-JP')}`));
+          priceLine.append(makeElement('strong', 'sale-price', `¥${Number(item.salePrice).toLocaleString('ja-JP')}`));
+          priceLine.append(makeElement('span', 'sale-label', 'SALE'));
+        } else {
+          priceLine.append(makeElement('span', 'price-not-set', 'Price not set by shop'));
+        }
+        cardBody.append(priceLine);
+
+        const deadlineLine = makeElement('div', 'deadline-line');
+        deadlineLine.append(makeElement('span', 'clock-icon', '◷'));
+        deadlineLine.append(makeElement('span', '', item.deadline ? `Reserve by ${item.deadline}` : 'Reservation time not set'));
+        cardBody.append(deadlineLine);
+
+        const bookingForm = makeElement('form', 'booking-form');
+        const quantityLabel = makeElement('label', '', 'Quantity');
+        quantityLabel.htmlFor = `quantity-${item.id}`;
+        const quantitySelect = makeElement('select', 'quantity-select');
+        quantitySelect.id = `quantity-${item.id}`;
+        quantitySelect.name = 'quantity';
+        quantitySelect.setAttribute('aria-label', `Quantity for ${item.name || 'food special'}`);
+        const availableCount = Number.parseInt(item.quantity, 10) || 1;
+        for (let count = 1; count <= Math.min(availableCount, 20); count += 1) {
+          const option = makeElement('option', '', String(count));
+          option.value = String(count);
+          quantitySelect.append(option);
+        }
+        quantitySelect.disabled = itemIsSoldOut;
+        quantityLabel.append(quantitySelect);
+        const bookButton = makeElement('button', 'book-button', itemIsSoldOut ? 'Sold out' : 'Reserve now');
+        bookButton.type = 'submit';
+        bookButton.disabled = itemIsSoldOut;
+        bookingForm.append(quantityLabel, bookButton);
+        bookingForm.addEventListener('submit', event => {
+          event.preventDefault();
+          openBookingLogin(item, Number(quantitySelect.value));
+        });
+        cardBody.append(bookingForm);
+        card.append(imageArea, cardBody);
+        foodGrid.append(card);
+      });
+
+      try { const response = await fetch('/api/my-bookings'); document.querySelector('#booking-count').textContent = String((await response.json()).length); } catch (error) { /* Count is optional. */ }
+    }
+
+    function formatYen(value) {
+      return `¥${Number(value).toLocaleString('ja-JP')}`;
+    }
+
+    function openBookingLogin(item, quantity) {
+      const salePrice = Number(item.salePrice) || 0;
+      selectedBooking = { item, quantity, salePrice, totalPrice: salePrice * quantity };
+      document.querySelector('#booking-checkout').hidden = false;
+      document.querySelector('#booking-success').hidden = true;
+      document.querySelector('#review-product').textContent = item.name || 'Food special';
+      document.querySelector('#review-quantity').textContent = `Quantity: ${quantity}`;
+      document.querySelector('#review-total').textContent = salePrice ? `Total: ${formatYen(salePrice * quantity)}` : 'Total: price not set';
+      customerDetailsForm.reset();
+      bookingDialog.showModal();
+    }
+
+    async function makeBooking(customer) {
+      const { item, quantity, salePrice, totalPrice } = selectedBooking;
+      const booking = {
+        id: `booking-${Date.now()}`,
+        foodItemId: item.id,
+        foodName: item.name || 'Food special',
+        quantity: quantity,
+        originalPrice: Number(item.originalPrice) || null,
+        salePrice: salePrice || null,
+        totalPrice: totalPrice,
+        customerName: customer.name,
+        customerEmail: customer.email,
+        customerPhone: customer.phone,
+        deadline: item.deadline || '',
+        bookedAt: new Date().toLocaleString(),
+        status: 'Requested'
+      };
+
+      try {
+        const response = await fetch('/api/bookings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId: item.id, quantity, customerName: customer.name, customerEmail: customer.email, customerPhone: customer.phone }) });
+        if (!response.ok) throw new Error('The item may be sold out or the deadline has passed. Please refresh and try again.');
+        const saved = await response.json();
+        document.querySelector('#booking-count').textContent = String((await (await fetch('/api/my-bookings')).json()).length);
+        document.querySelector('#booking-confirmation').textContent = `Thanks, ${booking.customerName}. Booking #${saved.id} is confirmed for ${quantity} × ${booking.foodName} (${formatYen(saved.totalPrice)}).`;
+        document.querySelector('#booking-checkout').hidden = true;
+        document.querySelector('#booking-success').hidden = false;
+      } catch (error) {
+        window.alert(error.message || 'The booking could not be saved. Please try again.');
+      }
+    }
+
+    customerDetailsForm.addEventListener('submit', event => {
+      event.preventDefault();
+      if (!selectedBooking) return;
+      makeBooking({
+        name: document.querySelector('#customer-name').value.trim(),
+        email: document.querySelector('#customer-email').value.trim(),
+        phone: document.querySelector('#customer-phone').value.trim()
+      });
+    });
+
+    renderFoodItems();
+  </script>
+</body>
+</html>

@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f3ef">
+  <title>Add a food special · The Good Store</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="food-reservation.css">
+</head>
+<body>
+  <main class="page-shell">
+    <header class="topbar">
+      <a class="brand" href="shop-owner-login.html" aria-label="The Good Store home"><span class="brand-mark">g</span><span>the good store</span></a>
+      <div class="topbar-right"><span class="owner-chip"><span class="status-dot"></span> OWNER PORTAL</span><a class="manage-link" href="shop-owner-bookings.html">Bookings</a><a class="manage-link" href="#items-section">Manage food items ↓</a><a class="back-link" href="shop-owner-login.html">← Back to sign in</a></div>
+    </header>
+
+    <section class="content">
+      <div class="heading">
+        <p class="eyebrow">SHARE SOMETHING DELICIOUS</p>
+        <h1>Add a food special</h1>
+        <p class="subheading">Add a few details so customers know what’s cooking and how long they have to reserve it.</p>
+      </div>
+
+      <section class="items-section" id="items-section" aria-labelledby="items-heading">
+        <div class="items-heading"><div><p class="eyebrow">YOUR MENU</p><h2 id="items-heading">Food items</h2></div><span class="item-count" id="item-count">0 items</span></div>
+        <div class="items-list" id="items-list"></div>
+      </section>
+      <details class="add-item-details" id="add-item-details" open>
+        <summary><span><span class="add-plus">+</span> Add a food item</span><span class="summary-note">Upload photos and set a reservation deadline</span></summary>
+      <form class="special-form" id="special-form">
+        <section class="form-section photo-section">
+          <div class="section-title"><span class="step">01</span><div><h2>Food photos</h2><p>Show customers what they can look forward to.</p></div></div>
+          <label class="upload-area" for="food-photos" id="drop-area">
+            <input id="food-photos" name="photos" type="file" accept="image/*" multiple required>
+            <span class="upload-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 15.5v3A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-3"/></svg></span>
+            <span class="upload-title">Click to upload <span>or drag and drop</span></span>
+            <span class="upload-hint">JPG, PNG or WEBP · Multiple photos welcome</span>
+          </label>
+          <div class="preview-grid" id="preview-grid" aria-live="polite"></div>
+          <p class="field-error" id="photo-error" aria-live="polite"></p>
+        </section>
+
+        <section class="form-section details-section">
+          <div class="section-title"><span class="step">02</span><div><h2>Reservation deadline</h2><p>Choose the latest time customers can reserve this special.</p></div></div>
+          <div class="deadline-card">
+            <div class="deadline-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/></svg></div>
+            <div class="deadline-copy"><label for="deadline-time">Reservations close at</label><span>Use your shop’s local date and time.</span></div>
+            <input id="deadline-time" name="deadline" type="datetime-local" required>
+          </div>
+          <div class="field-row">
+            <div class="text-field"><label for="food-name">Special name</label><input id="food-name" name="foodName" type="text" placeholder="e.g. Sunday sourdough box" required></div>
+            <div class="text-field"><label for="quantity">Available portions</label><input id="quantity" name="quantity" type="number" min="1" placeholder="e.g. 12" required></div>
+          </div>
+          <div class="field-row price-row">
+            <div class="text-field"><label for="original-price">Original price <span>¥</span></label><input id="original-price" name="originalPrice" type="number" min="1" step="1" placeholder="e.g. 1,200" required></div>
+            <div class="text-field"><label for="sale-price">Sale price <span>¥</span></label><input id="sale-price" name="salePrice" type="number" min="1" step="1" placeholder="e.g. 900" required></div>
+          </div>
+        </section>
+
+        <div class="form-actions"><p><span class="lock" aria-hidden="true">⌑</span> Your photos and details stay with your shop.</p><button type="submit" class="submit-button">Add food item <span aria-hidden="true">→</span></button></div>
+        <p class="form-message" id="form-message" role="status"></p>
+      </form>
+      </details>
+      <footer>© 2025 The Good Store <span>Made for the people who make it.</span></footer>
+    </section>
+  </main>
+  <script>
+    const input = document.querySelector('#food-photos');
+    const grid = document.querySelector('#preview-grid');
+    const dropArea = document.querySelector('#drop-area');
+    const photoError = document.querySelector('#photo-error');
+    const formMessage = document.querySelector('#form-message');
+    document.querySelector('#sale-price').addEventListener('input', event => event.currentTarget.setCustomValidity(''));
+    const itemsList = document.querySelector('#items-list');
+    const itemCount = document.querySelector('#item-count');
+    let items = [];
+    let previewUrls = [];
+
+    async function api(url, options = {}) {
+      const response = await fetch(url, options);
+      if (response.status === 401) { location.href = 'shop-owner-login.html'; throw new Error('Please sign in'); }
+      if (!response.ok) throw new Error('Could not save changes. Check your input and try again.');
+      return response.json();
+    }
+    async function loadItems() { items = await api('/api/owner/items'); renderItems(); }
+
+    function showPhotos(files) {
+      previewUrls.forEach(URL.revokeObjectURL);
+      previewUrls = [];
+      grid.replaceChildren();
+      photoError.textContent = '';
+      [...files].filter(file => file.type.startsWith('image/')).forEach(file => {
+        const card = document.createElement('div');
+        card.className = 'preview-card';
+        const image = document.createElement('img');
+        image.alt = file.name;
+        image.src = URL.createObjectURL(file);
+        previewUrls.push(image.src);
+        const name = document.createElement('span');
+        name.textContent = file.name;
+        card.append(image, name);
+        grid.append(card);
+      });
+      if (files.length && !grid.children.length) photoError.textContent = 'Please choose an image file.';
+    }
+
+    input.addEventListener('change', () => showPhotos(input.files));
+    for (const eventName of ['dragenter', 'dragover']) dropArea.addEventListener(eventName, event => { event.preventDefault(); dropArea.classList.add('is-dragging'); });
+    for (const eventName of ['dragleave', 'drop']) dropArea.addEventListener(eventName, event => { event.preventDefault(); dropArea.classList.remove('is-dragging'); });
+    dropArea.addEventListener('drop', event => {
+      input.files = event.dataTransfer.files;
+      showPhotos(input.files);
+    });
+
+    async function saveItem(item) {
+      await api('/api/owner/items/' + item.id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(item) });
+      await loadItems();
+    }
+
+    function create(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+
+    function renderItems() {
+      itemsList.replaceChildren();
+      itemCount.textContent = `${items.length} ${items.length === 1 ? 'item' : 'items'}`;
+      if (!items.length) {
+        const empty = create('div', 'empty-state');
+        empty.append(create('strong', '', 'No food items yet'), create('span', '', 'Add your first item below. You can edit it or mark it sold out here.'));
+        itemsList.append(empty);
+        return;
+      }
+      items.forEach(item => {
+        const card = create('article', `item-card${item.soldOut ? ' sold-out' : ''}`);
+        const image = create('img', 'item-photo');
+        image.src = item.photo;
+        image.alt = item.photoName || item.name || 'Food item';
+        const main = create('div', 'item-main');
+        const titleLine = create('div', 'item-title-line');
+        titleLine.append(create('h3', '', item.name || 'Food special'), create('span', `availability ${item.soldOut ? 'out' : ''}`, item.soldOut ? 'Sold out' : 'Available'));
+        main.append(titleLine);
+        const meta = create('p', 'item-meta', `${item.quantity ? `${item.quantity} portions` : 'Portions not set'} · Reservations close ${item.deadline || 'time not set'}`);
+        main.append(meta);
+        const price = create('p', 'owner-price');
+        if (item.originalPrice && item.salePrice) {
+          price.append(create('span', 'old-price', `¥${Number(item.originalPrice).toLocaleString('ja-JP')}`), create('strong', '', `¥${Number(item.salePrice).toLocaleString('ja-JP')}`));
+        } else {
+          price.textContent = 'Add prices to this item';
+        }
+        main.append(price);
+        const controls = create('div', 'item-controls');
+        const toggle = create('button', `toggle-button${item.soldOut ? ' restore' : ''}`, item.soldOut ? 'Mark available' : 'Mark sold out');
+        toggle.type = 'button';
+        toggle.addEventListener('click', async () => { try { await saveItem({ ...item, deadline: item.deadline.slice(0, 16), soldOut: !item.soldOut, photo: undefined }); } catch (error) { formMessage.textContent = error.message; } });
+        const edit = create('button', 'edit-button', 'Edit');
+        edit.type = 'button';
+        edit.setAttribute('aria-expanded', 'false');
+        const editor = create('form', 'item-editor');
+        editor.hidden = true;
+        const nameLabel = create('label', '', 'Food name');
+        const nameInput = create('input'); nameInput.name = 'name'; nameInput.value = item.name || ''; nameInput.required = true; nameLabel.append(nameInput);
+        const qtyLabel = create('label', '', 'Portions');
+        const qtyInput = create('input'); qtyInput.name = 'quantity'; qtyInput.type = 'number'; qtyInput.min = '0'; qtyInput.value = item.quantity ?? ''; qtyInput.required = true; qtyLabel.append(qtyInput);
+        const timeLabel = create('label', '', 'Reservation deadline');
+        const timeInput = create('input'); timeInput.name = 'deadline'; timeInput.type = 'datetime-local'; timeInput.value = (item.deadline || '').slice(0, 16); timeInput.required = true; timeLabel.append(timeInput);
+        const originalLabel = create('label', '', 'Original price (¥)');
+        const originalInput = create('input'); originalInput.name = 'originalPrice'; originalInput.type = 'number'; originalInput.min = '1'; originalInput.step = '1'; originalInput.value = item.originalPrice || ''; originalInput.required = true; originalLabel.append(originalInput);
+        const saleLabel = create('label', '', 'Sale price (¥)');
+        const saleInput = create('input'); saleInput.name = 'salePrice'; saleInput.type = 'number'; saleInput.min = '1'; saleInput.step = '1'; saleInput.value = item.salePrice || ''; saleInput.required = true; saleLabel.append(saleInput);
+        saleInput.addEventListener('input', () => saleInput.setCustomValidity(''));
+        const photoLabel = create('label', 'replace-photo', 'Replace photo');
+        const photoInput = create('input'); photoInput.type = 'file'; photoInput.accept = 'image/*'; photoLabel.append(photoInput);
+        const editorActions = create('div', 'editor-actions');
+        const remove = create('button', 'delete-button', 'Delete item'); remove.type = 'button';
+        remove.addEventListener('click', async () => { if (!confirm('Delete this food item?')) return; try { await api('/api/owner/items/' + item.id, { method: 'DELETE' }); await loadItems(); } catch (error) { formMessage.textContent = error.message; } });
+        const save = create('button', 'save-edit-button', 'Save changes'); save.type = 'submit';
+        editorActions.append(remove, save);
+        editor.append(nameLabel, qtyLabel, timeLabel, originalLabel, saleLabel, photoLabel, editorActions);
+        editor.addEventListener('submit', async event => {
+          event.preventDefault();
+          item.name = nameInput.value.trim();
+          item.quantity = qtyInput.value;
+          item.deadline = timeInput.value;
+          if (Number(saleInput.value) > Number(originalInput.value)) { saleInput.setCustomValidity('Sale price must be less than or equal to the original price.'); saleInput.reportValidity(); return; }
+          saleInput.setCustomValidity('');
+          item.originalPrice = Number(originalInput.value);
+          item.salePrice = Number(saleInput.value);
+          try {
+            const updated = { ...item, photo: undefined };
+            if (photoInput.files[0]) updated.photo = await compressImage(photoInput.files[0]);
+            await saveItem(updated);
+            formMessage.textContent = 'Food item updated.';
+          } catch (error) { formMessage.textContent = error.message; }
+        });
+        edit.addEventListener('click', () => { editor.hidden = !editor.hidden; edit.setAttribute('aria-expanded', String(!editor.hidden)); edit.textContent = editor.hidden ? 'Edit' : 'Close'; });
+        controls.append(toggle, edit);
+        card.append(image, main, controls, editor);
+        itemsList.append(card);
+      });
+    }
+
+    function compressImage(file) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        const url = URL.createObjectURL(file);
+        image.onload = () => {
+          const scale = Math.min(1, 1000 / Math.max(image.width, image.height));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(image.width * scale);
+          canvas.height = Math.round(image.height * scale);
+          canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+          URL.revokeObjectURL(url);
+          resolve(canvas.toDataURL('image/jpeg', 0.78));
+        };
+        image.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not read image')); };
+        image.src = url;
+      });
+    }
+
+    document.querySelector('#special-form').addEventListener('submit', async event => {
+      event.preventDefault();
+      if (!input.files.length) { photoError.textContent = 'Upload at least one food photo to continue.'; input.focus(); return; }
+      if (!document.querySelector('#deadline-time').value) { document.querySelector('#deadline-time').focus(); return; }
+      const originalPrice = Number(document.querySelector('#original-price').value);
+      const salePrice = Number(document.querySelector('#sale-price').value);
+      if (!originalPrice || !salePrice) { document.querySelector('#original-price').focus(); return; }
+      if (salePrice > originalPrice) { document.querySelector('#sale-price').setCustomValidity('Sale price must be less than or equal to the original price.'); document.querySelector('#sale-price').reportValidity(); return; }
+      document.querySelector('#sale-price').setCustomValidity('');
+      const addButton = document.querySelector('.submit-button');
+      addButton.disabled = true;
+      addButton.textContent = 'Preparing photos…';
+      try {
+        for (const file of input.files) {
+          await api('/api/owner/items', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: document.querySelector('#food-name').value.trim(), quantity: document.querySelector('#quantity').value, originalPrice, salePrice, deadline: document.querySelector('#deadline-time').value, photo: await compressImage(file) }) });
+        }
+        {
+          await loadItems();
+          document.querySelector('#special-form').reset();
+          showPhotos([]);
+          formMessage.textContent = 'Food item added. You can edit it or mark it sold out below.';
+          document.querySelector('#items-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      } catch {
+        formMessage.textContent = 'Could not save the photo. Please try another image.';
+      } finally {
+        addButton.disabled = false;
+        addButton.innerHTML = 'Add food item <span aria-hidden="true">→</span>';
+      }
+    });
+    loadItems().catch(error => { formMessage.textContent = error.message; });
+  </script>
+</body>
+</html>

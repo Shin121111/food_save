@@ -1,0 +1,7 @@
+/* Price styling is separate so the main page styles remain easy to follow. */
+.food-price-line { display: flex; align-items: baseline; gap: 8px; min-height: 23px; margin: 0 0 8px; }
+.original-price { color: #98a198; font-size: 9px; text-decoration: line-through; }
+.sale-price { color: #496b54; font-size: 17px; font-weight: 700; letter-spacing: -.3px; }
+.sale-label { padding: 3px 5px; border-radius: 3px; background: #f4e9e3; color: #a26d58; font-size: 7px; font-weight: 700; letter-spacing: .6px; }
+.price-not-set { color: #a16d59; font-size: 9px; }
+.booking-card-details .booking-price { color: #58735d; font-weight: 600; }

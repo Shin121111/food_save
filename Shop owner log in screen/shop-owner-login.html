@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f3ef">
+  <title>Sign in · The Good Store</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shop-owner-login.css">
+</head>
+<body>
+  <main class="login-layout">
+    <section class="brand-panel" aria-label="The Good Store">
+      <div class="brand-top">
+        <a class="brand" href="#" aria-label="The Good Store home">
+          <span class="brand-mark" aria-hidden="true">g</span>
+          <span>the good store</span>
+        </a>
+        <span class="owner-label"><span class="status-dot"></span> OWNER PORTAL</span>
+      </div>
+
+      <div class="brand-copy">
+        <p class="eyebrow">YOUR STORE, AT A GLANCE</p>
+        <h1>Good things<br>start here.</h1>
+        <p class="intro">A calmer way to run your shop. Sign in to keep an eye on orders, products, and all the little things that make your store yours.</p>
+      </div>
+
+      <div class="store-art" aria-hidden="true">
+        <div class="sun"></div>
+        <div class="plant plant-left"><i></i><i></i><i></i><b></b></div>
+        <div class="plant plant-right"><i></i><i></i><i></i><b></b></div>
+        <div class="shelf shelf-one"></div><div class="shelf shelf-two"></div>
+        <div class="jar jar-one"><span></span></div>
+        <div class="jar jar-two"><span></span></div>
+        <div class="jar jar-three"><span></span></div>
+        <div class="vase"><span></span></div>
+        <div class="book book-one"></div><div class="book book-two"></div>
+        <div class="art-note">A little care<br>goes a long way.</div>
+      </div>
+      <div class="brand-footer"><span>MADE FOR THE PEOPLE WHO MAKE IT</span><span>01 — 03</span></div>
+    </section>
+
+    <section class="form-panel">
+      <div class="mobile-brand"><span class="brand-mark" aria-hidden="true">g</span> the good store</div>
+      <div class="form-wrap">
+        <div class="welcome-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3.5c-3.7 0-6.7 3-6.7 6.7 0 4.8 6.7 10.3 6.7 10.3s6.7-5.5 6.7-10.3c0-3.7-3-6.7-6.7-6.7Z" stroke="currentColor" stroke-width="1.5"/><path d="M9.2 10.2c1.5.1 2.9 1.5 3 3 .1-1.5 1.5-2.9 3-3-1.5-.1-2.9-1.5-3-3-.1 1.5-1.5 2.9-3 3Z" fill="currentColor"/></svg></div>
+        <p class="eyebrow">WELCOME BACK</p>
+        <h2>Sign in to your<br>shop.</h2>
+        <p class="form-intro">Your little corner of the world is waiting.</p>
+
+        <form id="owner-login-form">
+          <div id="shop-name-field" hidden><label for="shop-name">Shop name</label><div class="input-wrap"><input id="shop-name" name="shopName" type="text" maxlength="150" placeholder="Your shop name"></div></div>
+          <label for="email">Email address</label>
+          <div class="input-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m4.5 7 7.5 5.5L19.5 7"/></svg><input id="email" name="email" type="email" placeholder="you@yourstore.com" autocomplete="username" required></div>
+
+          <div class="password-heading"><label for="password">Password</label><a href="#forgot">Forgot password?</a></div>
+          <div class="input-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="10" width="15" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><input id="password" name="password" type="password" placeholder="Enter your password" autocomplete="current-password" required><button class="show-password" type="button" aria-label="Show password">SHOW</button></div>
+
+          <label class="remember"><input type="checkbox" name="remember"><span class="checkmark"></span><span>Keep me signed in</span></label>
+          <button class="submit-button" type="submit">Sign in <span aria-hidden="true">→</span></button>
+          <p id="login-message" role="status"></p>
+          <p><button type="button" id="register-toggle" style="border:0;background:none;color:#496b54;cursor:pointer">New shop? Create an account</button></p>
+        </form>
+        <div class="secure-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.7 3 8.2 7 10 4-1.8 7-5.3 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg> Your shop, safe and sound.</div>
+      </div>
+      <footer class="form-footer"><span>© 2025 The Good Store</span><a href="#help">Need a hand?</a></footer>
+    </section>
+  </main>
+  <script>
+    let registering = false;
+    document.querySelector('#register-toggle').addEventListener('click', function () {
+      registering = !registering;
+      document.querySelector('#shop-name-field').hidden = !registering;
+      document.querySelector('#shop-name').required = registering;
+      document.querySelector('.submit-button').textContent = registering ? 'Create account' : 'Sign in';
+      this.textContent = registering ? 'Already have an account? Sign in' : 'New shop? Create an account';
+      document.querySelector('#login-message').textContent = '';
+    });
+    document.querySelector('#owner-login-form').addEventListener('submit', async function (event) {
+      event.preventDefault();
+      const message = document.querySelector('#login-message');
+      const body = { email: document.querySelector('#email').value, password: document.querySelector('#password').value, shopName: document.querySelector('#shop-name').value };
+      try {
+        const response = await fetch(registering ? '/api/register' : '/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (!response.ok) throw new Error(registering ? 'Could not create account. Use a valid email and a password of at least 10 characters.' : 'Email or password is incorrect.');
+        location.href = 'food-reservation.html';
+      } catch (error) { message.textContent = error.message; }
+    });
+    document.querySelector('.show-password').addEventListener('click', function () {
+      const password = document.querySelector('#password');
+      const showing = password.type === 'password';
+      password.type = showing ? 'text' : 'password';
+      this.textContent = showing ? 'HIDE' : 'SHOW';
+      this.setAttribute('aria-label', showing ? 'Hide password' : 'Show password');
+    });
+  </script>
+</body>
+</html>

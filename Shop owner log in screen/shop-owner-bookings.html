@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f3ef">
+  <title>Shop bookings · The Good Store</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="food-reservation.css">
+  <link rel="stylesheet" href="shop-owner-bookings.css">
+</head>
+<body>
+  <main class="page-shell">
+    <header class="topbar">
+      <a class="brand" href="food-reservation.html" aria-label="The Good Store owner home"><span class="brand-mark">g</span><span>the good store</span></a>
+      <div class="topbar-right"><span class="owner-chip"><span class="status-dot"></span> OWNER PORTAL</span><a class="manage-link" href="food-reservation.html">Food items</a><a class="back-link" id="sign-out" href="shop-owner-login.html">Sign out</a></div>
+    </header>
+
+    <section class="owner-bookings-content">
+      <div class="bookings-page-heading">
+        <div><p class="eyebrow">YOUR SHOP ORDERS</p><h1>Bookings</h1><p class="page-intro">See what customers have reserved and mark orders when they’re picked up.</p></div>
+        <div class="shop-badge"><span class="status-dot"></span> THE GOOD STORE</div>
+      </div>
+
+      <div class="booking-summary" aria-label="Booking totals">
+        <div class="summary-card"><span class="summary-number" id="total-count">0</span><span class="summary-label">TOTAL BOOKINGS</span></div>
+        <div class="summary-card"><span class="summary-number" id="waiting-count">0</span><span class="summary-label">WAITING FOR PICKUP</span></div>
+        <div class="summary-card"><span class="summary-number" id="picked-count">0</span><span class="summary-label">PICKED UP</span></div>
+      </div>
+
+      <div class="booking-list-heading"><div><h2>Customer reservations</h2><p>Only bookings for this shop are shown.</p></div></div>
+      <div class="booking-list" id="booking-list" aria-live="polite"></div>
+
+      <footer>© 2025 The Good Store <span>Made for the people who make it.</span></footer>
+    </section>
+  </main>
+
+  <script>
+    // In a real app, get this ID from the signed-in shop owner's account.
+    const CURRENT_SHOP_ID = 'good-store-001';
+    const BOOKING_STORAGE_KEY = 'good-store-owner-bookings-v1';
+
+    // Sample data for two shops. The page below filters by CURRENT_SHOP_ID.
+    const sampleBookings = [
+      { id: 'BK-1042', shopId: 'good-store-001', customerName: 'Mika Tanaka', productName: 'Sunday sourdough loaf', quantity: 2, totalPrice: 1300, status: 'waiting', reservedAt: 'Today, 10:24' },
+      { id: 'BK-1041', shopId: 'good-store-001', customerName: 'Ren Sato', productName: 'Strawberry cream tart', quantity: 1, totalPrice: 580, status: 'waiting', reservedAt: 'Today, 09:48' },
+      { id: 'BK-1040', shopId: 'good-store-002', customerName: 'Aoi Suzuki', productName: 'Roasted veggie lunch box', quantity: 1, totalPrice: 800, status: 'waiting', reservedAt: 'Today, 09:20' },
+      { id: 'BK-1039', shopId: 'good-store-001', customerName: 'Haruto Ito', productName: 'Sunday sourdough loaf', quantity: 1, totalPrice: 650, status: 'picked-up', reservedAt: 'Today, 08:52' },
+      { id: 'BK-1038', shopId: 'good-store-002', customerName: 'Yui Nakamura', productName: 'Seasonal fruit box', quantity: 2, totalPrice: 1600, status: 'waiting', reservedAt: 'Today, 08:31' }
+    ];
+
+    const bookingList = document.querySelector('#booking-list');
+    document.querySelector('#sign-out').addEventListener('click', async event => { event.preventDefault(); await fetch('/api/logout', { method: 'POST' }); location.href = 'shop-owner-login.html'; });
+
+    function createElement(tag, className, text) {
+      const element = document.createElement(tag);
+      if (className) element.className = className;
+      if (text !== undefined) element.textContent = text;
+      return element;
+    }
+
+    function loadAllBookings() {
+      // Later, replace this with a request such as fetch('/api/shops/' + CURRENT_SHOP_ID + '/bookings').
+      try {
+        const saved = localStorage.getItem(BOOKING_STORAGE_KEY);
+        if (saved) return JSON.parse(saved);
+      } catch (error) {
+        // The sample bookings still work if browser storage is unavailable.
+      }
+      return sampleBookings.map(booking => ({ ...booking }));
+    }
+
+    let allBookings = [];
+
+    function saveAllBookings() {
+      try {
+        localStorage.setItem(BOOKING_STORAGE_KEY, JSON.stringify(allBookings));
+      } catch (error) {
+        // The picked-up state will last for this page view if storage is unavailable.
+      }
+    }
+
+    async function markAsPickedUp(bookingId) {
+      try {
+        const response = await fetch(`/api/owner/bookings/${bookingId}/pickup`, { method: 'POST' });
+        if (!response.ok) throw new Error();
+        await refreshBookings();
+      } catch (error) { alert('Could not update the booking. Please try again.'); }
+    }
+
+    function renderBookings() {
+      const shopBookings = allBookings;
+      const waiting = shopBookings.filter(booking => booking.status !== 'picked-up').length;
+      const pickedUp = shopBookings.length - waiting;
+
+      document.querySelector('#total-count').textContent = String(shopBookings.length);
+      document.querySelector('#waiting-count').textContent = String(waiting);
+      document.querySelector('#picked-count').textContent = String(pickedUp);
+      bookingList.replaceChildren();
+
+      if (shopBookings.length === 0) {
+        bookingList.append(createElement('div', 'empty-bookings', 'No bookings for this shop yet.'));
+        return;
+      }
+
+      shopBookings.forEach(booking => {
+        const isPickedUp = booking.status === 'picked-up';
+        const card = createElement('article', `owner-booking-card${isPickedUp ? ' picked-up' : ''}`);
+        const main = createElement('div', 'owner-booking-main');
+        const topLine = createElement('div', 'owner-booking-topline');
+        topLine.append(createElement('span', 'booking-id', booking.id));
+        topLine.append(createElement('span', `booking-status ${isPickedUp ? 'status-picked' : 'status-waiting'}`, isPickedUp ? 'Picked up' : 'Awaiting pickup'));
+        main.append(topLine);
+        main.append(createElement('h3', 'product-name', booking.productName));
+        main.append(createElement('p', 'customer-name', `Customer · ${booking.customerName}`));
+        main.append(createElement('p', 'reserved-at', `Booked ${booking.reservedAt}`));
+
+        const details = createElement('div', 'booking-details');
+        details.append(createElement('div', 'detail-cell', 'Quantity'));
+        details.append(createElement('strong', 'detail-value', String(booking.quantity)));
+        details.append(createElement('div', 'detail-cell', 'Total price'));
+        details.append(createElement('strong', 'detail-value price-value', `¥${Number(booking.totalPrice).toLocaleString('ja-JP')}`));
+
+        const actionArea = createElement('div', 'booking-action');
+        const button = createElement('button', `pickup-button${isPickedUp ? ' is-done' : ''}`, isPickedUp ? '✓ Picked up' : 'Mark as picked up');
+        button.type = 'button';
+        button.disabled = isPickedUp;
+        button.addEventListener('click', () => markAsPickedUp(booking.id));
+        actionArea.append(button);
+        card.append(main, details, actionArea);
+        bookingList.append(card);
+      });
+    }
+
+    async function refreshBookings() {
+      try {
+        const response = await fetch('/api/owner/bookings');
+        if (response.status === 401) { location.href = 'shop-owner-login.html'; return; }
+        if (!response.ok) throw new Error();
+        allBookings = (await response.json()).map(booking => ({ ...booking, status: booking.status === 'PICKED_UP' ? 'picked-up' : 'waiting' }));
+        renderBookings();
+      } catch (error) { bookingList.textContent = 'Could not load bookings. Please try again later.'; }
+    }
+    refreshBookings();
+  </script>
+</body>
+</html>
