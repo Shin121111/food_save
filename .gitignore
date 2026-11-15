@@ -1,0 +1,14 @@
+# Build output and local credentials
+backend/target/
+backend/.env
+.env
+.env.*
+!.env.example
+*.log
+
+# Scratch files and editor settings
+work/
+outputs/
+.idea/
+.vscode/
+
