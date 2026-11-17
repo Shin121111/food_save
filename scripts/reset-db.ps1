@@ -24,24 +24,33 @@ if (-not $mysql) {
     exit 1
 }
 
-if ($null -eq $env:MYSQLPASSWORD -and $onWindows) {
-    $saved = [Environment]::GetEnvironmentVariable('MYSQLPASSWORD', 'User')
-    if ($null -ne $saved) { $env:MYSQLPASSWORD = $saved }
+# The password that start.cmd saved in backend\local.properties.
+$password = $env:MYSQLPASSWORD
+$localProps = Join-Path (Split-Path -Parent $PSScriptRoot) 'backend/local.properties'
+if ($null -eq $password -and (Test-Path $localProps)) {
+    $line = Get-Content $localProps | Where-Object { $_ -match '^spring\.datasource\.password=' } | Select-Object -First 1
+    if ($line) { $password = $line.Substring($line.IndexOf('=') + 1).Replace('\\', '\') }
+}
+if ($null -eq $password) {
+    Write-Host '  [STOP] The MySQL password is not saved yet. Double-click start.cmd once first.' -ForegroundColor Red
+    exit 1
 }
 
 Write-Host ''
 Write-Host "  This deletes ALL local shops, food items and bookings in '$database'." -ForegroundColor Yellow
-Write-Host '  Stop the store first (press Ctrl+C in the start.cmd window).' -ForegroundColor Yellow
 $answer = Read-Host '  Type YES to continue'
 if ($answer -cne 'YES') { Write-Host '  Nothing was deleted.'; exit 0 }
 
-$env:MYSQL_PWD = $env:MYSQLPASSWORD
+# Stop the server first, so it does not use the database while it is deleted.
+& (Join-Path $PSScriptRoot 'server.ps1') stop
+
+$env:MYSQL_PWD = $password
 $output = & $mysql -u root -h 127.0.0.1 -e "DROP DATABASE IF EXISTS $database;" 2>&1 | ForEach-Object { "$_" }
 $code = $LASTEXITCODE
 Remove-Item Env:MYSQL_PWD -ErrorAction SilentlyContinue
 if ($code -ne 0) {
     Write-Host "  [FAIL] $($output -join ' ')" -ForegroundColor Red
-    if (($output -join ' ') -match 'Access denied') { Write-Host '  The MySQL password is wrong. Run start.cmd: it asks for the password again.' -ForegroundColor Yellow }
+    if (($output -join ' ') -match 'Access denied') { Write-Host '  The MySQL password is wrong. Delete backend\local.properties, then run start.cmd: it asks again.' -ForegroundColor Yellow }
     exit 1
 }
 Write-Host "  [OK]   '$database' was deleted. Double-click start.cmd: it creates fresh tables." -ForegroundColor Green

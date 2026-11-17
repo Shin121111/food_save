@@ -121,7 +121,7 @@ if ($script:failed -eq 0) {
 } else {
     Write-Host "  $($script:failed) CHECK(S) FAILED, $($script:passed) passed." -ForegroundColor Red
     Write-Host '  Copy everything in this window and paste it to Codex.' -ForegroundColor Yellow
-    Write-Host '  Also copy the last red lines from the start.cmd window.' -ForegroundColor Yellow
+    Write-Host '  Also copy the end of backend\logs\server.log (the server log).' -ForegroundColor Yellow
 }
 Write-Host ''
 if ($script:failed -gt 0) { exit 1 }

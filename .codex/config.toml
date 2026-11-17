@@ -1,0 +1,8 @@
+# Project settings for Codex. Codex reads this file only after you mark the project as trusted.
+#
+# Lets sandboxed commands use the network, so the Maven Wrapper can download
+# packages and the server can connect to MySQL on this computer.
+# The server itself must still start OUTSIDE the sandbox (see AGENTS.md),
+# because the sandbox stops background processes when a command ends.
+[sandbox_workspace_write]
+network_access = true
