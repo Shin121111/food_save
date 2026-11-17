@@ -17,6 +17,7 @@ param(
 )
 
 $ErrorActionPreference = 'Continue'
+. (Join-Path $PSScriptRoot 'props.ps1')
 $root = Split-Path -Parent $PSScriptRoot
 $backend = Join-Path $root 'backend'
 $logDir = Join-Path $backend 'logs'
@@ -209,14 +210,7 @@ if (-not (Test-Path $localProps)) {
             'After that, agents can start the server without a password prompt.')
     }
     $plain = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure))
-    # Spring reads .properties as ISO-8859-1 and treats backslash as an escape, so write
-    # backslash as \\, every non-ASCII character as \uXXXX, and a leading space as "\ ".
-    $escaped = -join ($plain.ToCharArray() | ForEach-Object {
-        if ($_ -eq [char]'\') { '\\' } elseif ([int]$_ -gt 126) { '\u{0:x4}' -f [int]$_ } else { [string]$_ }
-    })
-    if ($escaped.StartsWith(' ')) { $escaped = '\' + $escaped }
-    $content = "# Local MySQL password for this computer only. Git ignores this file.`r`nspring.datasource.password=$escaped`r`n"
-    [IO.File]::WriteAllText($localProps, $content, (New-Object Text.UTF8Encoding($false)))
+    Save-Password $localProps $plain
     Ok 'Password saved in backend\local.properties'
 } else {
     Ok 'MySQL password is set'

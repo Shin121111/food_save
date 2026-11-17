@@ -25,18 +25,8 @@ if (-not $mysql) {
 }
 
 # The password that start.cmd saved in backend\local.properties (the only local source).
-$password = $null
-$localProps = Join-Path (Split-Path -Parent $PSScriptRoot) 'backend/local.properties'
-if (Test-Path $localProps) {
-    $line = Get-Content $localProps | Where-Object { $_ -match '^spring\.datasource\.password=' } | Select-Object -First 1
-    if ($line) {
-        $raw = $line.Substring($line.IndexOf('=') + 1)
-        $password = [regex]::Replace($raw, '\\u([0-9a-fA-F]{4})|\\(.)', {
-            param($m)
-            if ($m.Groups[1].Success) { [string][char][Convert]::ToInt32($m.Groups[1].Value, 16) } else { $m.Groups[2].Value }
-        })
-    }
-}
+. (Join-Path $PSScriptRoot 'props.ps1')
+$password = Read-SavedPassword (Join-Path (Split-Path -Parent $PSScriptRoot) 'backend/local.properties')
 if ($null -eq $password) {
     Write-Host '  [STOP] The MySQL password is not saved yet. Double-click start.cmd once first.' -ForegroundColor Red
     exit 1
