@@ -38,7 +38,7 @@ If you cannot run commands outside the sandbox at all, write the code, compile i
 
 ## Common errors
 
-`server.ps1 start` detects these in `backend/logs/server.log` and prints the fix.
+`server.ps1 start` prints the fix for the first four itself (build errors from its own output, the rest from `backend/logs/server.log`).
 
 | Error text | Cause | Fix |
 |---|---|---|

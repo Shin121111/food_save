@@ -6,7 +6,9 @@
 $ErrorActionPreference = 'Stop'
 $base = 'http://localhost:8080'
 $json = 'application/json'
-$stamp = Get-Date -Format 'yyyyMMddHHmmss'
+# Invariant culture: a Thai, Arabic or Finnish Windows would otherwise print a date Java cannot parse.
+$invariant = [Globalization.CultureInfo]::InvariantCulture
+$stamp = (Get-Date).ToString('yyyyMMddHHmmss', $invariant)
 $script:passed = 0
 $script:failed = 0
 
@@ -76,7 +78,7 @@ Step 'Shop owner can sign in' {
 
 # Smallest valid JPEG header; the server only checks the first two bytes.
 $photo = 'data:image/jpeg;base64,' + [Convert]::ToBase64String([byte[]](0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10))
-$deadline = (Get-Date).AddHours(3).ToString('yyyy-MM-ddTHH:mm')
+$deadline = (Get-Date).AddHours(3).ToString('yyyy-MM-ddTHH:mm', $invariant)
 $itemId = $null
 Step 'Owner adds a food item' {
     $r = Send 'POST' '/api/owner/items' $owner @{ name = "Self-test bread $stamp"; quantity = 5; originalPrice = 900; salePrice = 600; deadline = $deadline; photo = $photo }

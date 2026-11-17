@@ -21,6 +21,8 @@ Shops post leftover food at a lower price. Customers reserve it and pick it up.
    - Set a **root password** and write it down. You need it once more.
    - Keep **Start the MySQL Server at System Startup** turned on.
 
+Put the project in a plain folder such as `C:\dev\food_save`, **not** on the Desktop or in Documents when OneDrive syncs them. OneDrive would upload the saved MySQL password and can lock build files.
+
 You do not need to install Maven, and you do not need to write any SQL. The project brings its own Maven, and the server creates the `good_store` database and all tables on the first start.
 
 ### Every day
@@ -29,7 +31,7 @@ You do not need to install Maven, and you do not need to write any SQL. The proj
 |---|---|
 | Start the store | Double-click **`start.cmd`**. The first time, it asks for the MySQL password and saves it in `backend\local.properties` (Git ignores this file). The browser opens at http://localhost:8080/. The store keeps running after the window closes. |
 | See your HTML, CSS, JS or Java change | Double-click **`start.cmd`** again. It stops the old server and starts the new code. A browser refresh alone is not enough. |
-| Check that everything works | Double-click **`check.cmd`**. Each step shows PASS or FAIL. |
+| Check that everything works | Double-click **`check.cmd`**. Each step shows PASS or FAIL. It adds a "Self-test shop" to your local database only. |
 | Stop the store | Double-click **`stop.cmd`**. |
 | Fix "Unknown column" or "Table doesn't exist" | Double-click **`reset-db.cmd`**, type YES, then `start.cmd`. This deletes local test data only. |
 
