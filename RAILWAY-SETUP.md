@@ -12,6 +12,6 @@ The server creates its `gs_` tables at startup. Food photos are stored in MySQL,
 
 The customer booking history is tied to the current browser session. It will not follow a customer to another browser or device, and a server restart may end the session. Existing browser-only demo data is not migrated automatically.
 
-For local development, install Java 21 or newer and Maven, create a MySQL database, set the same five environment variables locally, then run `mvn spring-boot:run` from `backend`. Visit `http://localhost:8080/`. Do not commit credentials.
+For local development, see [README.md](README.md). Do not commit credentials.
 
 This implementation needs end-to-end testing with a running MySQL database and review before accepting real customer data.
