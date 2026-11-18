@@ -11,3 +11,7 @@ work/
 outputs/
 .idea/
 .vscode/
+
+# Local server files written by start.cmd
+backend/local.properties
+backend/logs/
